@@ -1,17 +1,15 @@
-#include <unistd.h>
-
-# define UNUSED(x) (void)x
+#include "libft/libft.h"
 
 void	free(void *ptr)
 {
 	UNUSED(ptr);
-	write(1, "free called!\n", 13);
+	ft_putstr("free called!\n");
 }
 
 void	*malloc(size_t size)
 {
 	UNUSED(size);
-	write(1, "malloc called!\n", 15);
+	ft_putstr("malloc called!\n");
 	return 0;
 }
 
@@ -19,6 +17,6 @@ void	*realloc(void *ptr, size_t size)
 {
 	UNUSED(ptr);
 	UNUSED(size);
-	write(1, "realloc called!\n", 16);
+	ft_putstr("realloc called!\n");
 	return 0;
 }
