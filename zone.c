@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:28 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/25 17:40:27 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/26 15:53:58 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,29 +17,40 @@
 
 #include "malloc.h"
 
+void *pointer_add(void *ptr, size_t s);
+
 void	*zone_new(size_t size, size_t pagesize)
 {
-	size_t				extra;
-	void				*zone;
-	t_block_header		*zone_header;
-	t_free_block_header	*block_header;
+	printf("Making a new zone for size %lu\n", size);
+	size_t			extra;
+	void			*zone;
+	t_block_header	*zone_header;
+	t_block_header	*block_header;
 
 	if (size == 0)
 		return NULL;
+	size += sizeof(t_block_header);
+	printf("Size after adding header: %lu\n", size);
 	extra = size % pagesize;
 	if (extra)
-		size += pagesize - size;
+		size += pagesize - extra;
+	printf("Size after aligning to pagesize (%lu): %lu\n", pagesize, size);
 	zone = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
 	if (zone == MAP_FAILED)
 		return NULL;
+	printf("mmap completed successfully.\n");
 	zone_header = (t_block_header *)zone;
 	zone_header->type = BLOCK_TYPE_HEAD;
 	zone_header->size = size;
-	block_header = (t_free_block_header *)(zone + sizeof(t_block_header));
-	block_header->b.type = BLOCK_TYPE_FREE;
-	block_header->b.size = size - sizeof(t_block_header);
-	block_header->next_free = NULL;
-	block_header->prev_free = NULL;
+	block_header = pointer_add(zone_header, sizeof(t_block_header));
+	block_header->type = BLOCK_TYPE_CRUFT;
+	block_header->size = size - sizeof(t_block_header);
+	block_header->next = NULL;
+	block_header->prev = NULL;
+	zone_header->next = NULL;
+	zone_header->prev = NULL;
+	printf("zone size = %lu\n", zone_header->size);
+	printf("block size = %lu\n", block_header->size);
 	return zone;
 }
 
