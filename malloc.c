@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:35 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/26 16:37:41 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/26 18:41:24 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ t_free_block_header	g_small = {{BLOCK_TYPE_HEAD, 4096, NULL, NULL}, NULL, NULL};
 t_free_block_header	g_large = {{BLOCK_TYPE_HEAD, 0, NULL, NULL}, NULL, NULL};
 
 void	*zone_new(size_t size, size_t pagesize);
+t_free_block_header	*add_new_zone(t_free_block_header *arena_head, size_t min_size);
 void	*pointer_add(void *ptr, size_t offset);
 t_free_block_header	*extract_free_block(t_free_block_header *head, size_t size);
 void	insert_free_block(t_free_block_header *list, t_free_block_header *block);
@@ -36,10 +37,8 @@ void	my_free(void *ptr)
 void	*todd(size_t size, t_free_block_header *arena_head)
 {
 	size_t				block_size;
-	size_t				zone_size;
 	t_block_header		*block;
 	t_free_block_header	*free_block;
-	t_block_header		*zone_head;
 
 	printf("Mallocing a block of size %lu\n", size);
 	block_size = sizeof(t_block_header) + size;
@@ -47,18 +46,9 @@ void	*todd(size_t size, t_free_block_header *arena_head)
 	if (block == NULL)
 	{
 		printf("No free block found... allocating a new zone.\n");
-		zone_head = (t_block_header *)arena_head;
-		while (zone_head->next)
-			zone_head = zone_head->next;
-		zone_size = (sizeof(t_block_header) + arena_head->b.size) * 100;
-		zone_head->next = zone_new(zone_size, getpagesize());
-		zone_head = zone_head->next;
-		if (zone_head == NULL)
-			return NULL;
-		free_block = pointer_add(zone_head, sizeof(t_block_header));
-		free_block->b.type = BLOCK_TYPE_FREE;
-		insert_free_block(arena_head, free_block);
-		return todd(size, arena_head);
+		block = (t_block_header *)add_new_zone(arena_head, block_size);
+		if (block == NULL)
+			return (NULL);
 	}
 	printf("Found a free block of size %lu. Using that.\n", block->size);
 	if (block->size >= block_size + sizeof(t_free_block_header))
@@ -81,12 +71,12 @@ void	*todd(size_t size, t_free_block_header *arena_head)
 void	*my_malloc(size_t size)
 {
 	if (size < MALLOC_SIZE_SMALL)
-		return todd(size, &g_tiny);
+		return (todd(size, &g_tiny));
 	else if (size < MALLOC_SIZE_LARGE)
-		return todd(size, &g_small);
+		return (todd(size, &g_small));
 	else
-		return todd(size, &g_large);
-	return 0;
+		return (todd(size, &g_large));
+	return (NULL);
 }
 
 void	*my_realloc(void *ptr, size_t size)
@@ -94,32 +84,26 @@ void	*my_realloc(void *ptr, size_t size)
 	UNUSED(ptr);
 	UNUSED(size);
 	ft_putstr("realloc called!\n");
-	return 0;
+	return (NULL);
 }
 
-void	show_alloc_mem()
-{
-	printf("show_alloc_mem\n");
-	t_block_header	*zone_head;
-	t_block_header	*block;
-	size_t			block_size;
-	void			*block_end;
+size_t	show_alloc_zone(const char *name, t_block_header *head);
+size_t	show_free_list(t_free_block_header *node);
 
-	zone_head = g_tiny.b.next;
-	while (zone_head != NULL)
-	{
-		printf("TINY : %p\n", zone_head);
-		block = pointer_add(zone_head, sizeof(t_block_header));
-		while (block != NULL)
-		{
-			block_size = block->size - sizeof(t_block_header);
-			block_end = pointer_add(block, block_size);
-			if (block->type == BLOCK_TYPE_USED)
-				printf("%p - %p : %lu bytes\n", block, block_end, block_size);
-			block = block->next;
-		}
-		zone_head = zone_head->next;
-	}
-	// TODO other arenas
-	// TODO total
+void	show_alloc_mem(void)
+{
+	size_t total;
+
+	printf("show_alloc_mem\n");
+	total = 0;
+	total += show_alloc_zone("TINY", g_tiny.b.next);
+	total += show_alloc_zone("SMALL", g_small.b.next);
+	total += show_alloc_zone("LARGE", g_large.b.next);
+	printf("Total : %lu bytes\n", total);
+	printf("------------------------------\nFREE :\n");
+	total = 0;
+	total += show_free_list(g_tiny.next_free);
+	total += show_free_list(g_small.next_free);
+	total += show_free_list(g_large.next_free);
+	printf("Total : %lu bytes\n", total);
 }

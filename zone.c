@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:28 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/26 15:53:58 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/26 18:34:11 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ void	*zone_new(size_t size, size_t pagesize)
 	t_block_header	*block_header;
 
 	if (size == 0)
-		return NULL;
+		return (NULL);
 	size += sizeof(t_block_header);
 	printf("Size after adding header: %lu\n", size);
 	extra = size % pagesize;
@@ -37,7 +37,7 @@ void	*zone_new(size_t size, size_t pagesize)
 	printf("Size after aligning to pagesize (%lu): %lu\n", pagesize, size);
 	zone = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
 	if (zone == MAP_FAILED)
-		return NULL;
+		return (NULL);
 	printf("mmap completed successfully.\n");
 	zone_header = (t_block_header *)zone;
 	zone_header->type = BLOCK_TYPE_HEAD;
@@ -51,7 +51,7 @@ void	*zone_new(size_t size, size_t pagesize)
 	zone_header->prev = NULL;
 	printf("zone size = %lu\n", zone_header->size);
 	printf("block size = %lu\n", block_header->size);
-	return zone;
+	return (zone);
 }
 
 // todo catch double free / bad free exceptions?
@@ -66,20 +66,24 @@ void	zone_free(void *zone)
 		printf("It didn't work!\n");
 }
 
-int main()
+t_free_block_header	*add_new_zone(t_free_block_header *arena_head, size_t min_size)
 {
-	size_t pagesize = getpagesize();
-	char *zone = zone_new(420, pagesize);
-	if (!zone)
-	{
-		printf("Failed.\n");
-		return 1;
-	}
-	strcpy(zone + sizeof(t_free_block_header), "Hello world!");
-	printf("zone = %p\n", zone);
-	printf("zone size = %lu\n", ((t_free_block_header *)zone)->b.size);
-	printf("content = %s\n", zone + sizeof(t_free_block_header));
-	zone_free(zone);
-	zone = NULL;
-	return 0;
+	t_block_header		*zone_head;
+	size_t				zone_size;
+	t_free_block_header	*free_block;
+
+	zone_head = (t_block_header *)arena_head;
+	while (zone_head->next)
+		zone_head = zone_head->next;
+	if (arena_head->b.size > 0)
+		zone_size = (sizeof(t_block_header) + arena_head->b.size) * 100;
+	else
+		zone_size = min_size;
+	zone_head->next = zone_new(zone_size, getpagesize());
+	zone_head = zone_head->next;
+	if (zone_head == NULL)
+		return (NULL);
+	free_block = pointer_add(zone_head, sizeof(t_block_header));
+	free_block->b.type = BLOCK_TYPE_FREE;
+	return (free_block);
 }

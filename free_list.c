@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/26 14:17:27 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/26 14:17:35 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/26 17:45:27 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ t_free_block_header	*extract_free_block(t_free_block_header *head, size_t size)
 
 void	insert_free_block(t_free_block_header *list, t_free_block_header *block)
 {
-	while (list->next_free && (list->next_free->b.size > block->b.size))
+	while (list->next_free && (list->next_free->b.size < block->b.size))
 		list = list->next_free;
 	block->next_free = list->next_free;
 	block->prev_free = list;

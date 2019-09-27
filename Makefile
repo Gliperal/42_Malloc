@@ -5,7 +5,7 @@ endif
 
 CC=gcc
 CFLAGS=-Wall -Wextra -Werror
-OBJS=malloc.o zone.o pointer.o free_list.o
+OBJS=malloc.o zone.o pointer.o free_list.o show_alloc_mem.o
 NAME=libft_malloc.so
 NAME_HOST=libft_malloc_$(HOSTTYPE).so
 RM=rm -rf
