@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:28 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/26 18:34:11 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/30 14:59:44 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,9 @@ void	zone_free(void *zone)
 	int				status;
 
 	zone_header = (t_block_header *)zone;
+	((t_block_header *)zone_header->prev)->next = zone_header->next;
+	if (zone_header->next != NULL)
+		((t_block_header *)zone_header->next)->prev = zone_header->prev;
 	status = munmap(zone, zone_header->size);
 	if (status != 0)
 		printf("It didn't work!\n");
@@ -80,6 +83,7 @@ t_free_block_header	*add_new_zone(t_free_block_header *arena_head, size_t min_si
 	else
 		zone_size = min_size;
 	zone_head->next = zone_new(zone_size, getpagesize());
+	((t_block_header *)zone_head->next)->prev = zone_head;
 	zone_head = zone_head->next;
 	if (zone_head == NULL)
 		return (NULL);

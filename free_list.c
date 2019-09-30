@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/26 14:17:27 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/26 17:45:27 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/30 14:45:05 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,4 +41,3 @@ void	insert_free_block(t_free_block_header *list, t_free_block_header *block)
 		list->next_free->prev_free = block;
 	list->next_free = block;
 }
-
