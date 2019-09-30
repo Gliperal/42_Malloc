@@ -1,23 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pointer.c                                          :+:      :+:    :+:   */
+/*   free_list.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/09/26 14:04:03 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/26 15:45:18 by nwhitlow         ###   ########.fr       */
+/*   Created: 2019/09/30 15:37:26 by nwhitlow          #+#    #+#             */
+/*   Updated: 2019/09/30 15:37:45 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
-
-void	*pointer_add(void *ptr, size_t offset)
-{
-	return ((char *)ptr + offset);
-}
-
-void	*pointer_sub(void *ptr, size_t offset)
-{
-	return ((char *)ptr - offset);
-}
+void				remove_free_block(t_free_block_header *block);
+t_free_block_header	*extract_free_block(t_free_block_header *head, size_t size);
+void				insert_free_block(t_free_block_header *list,
+													t_free_block_header *block);
+void				insert_free_block_s(t_free_block_header *free_block);
+void				merge_consecutive_free_blocks(t_free_block_header *left);

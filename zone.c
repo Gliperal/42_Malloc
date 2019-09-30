@@ -6,22 +6,22 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:28 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/30 14:59:44 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/30 16:16:07 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <sys/mman.h>	// mmap, munmap
 #include <unistd.h>		// getpagesize
-#include <stdio.h>		// printf (REMOVE)
+#include <stdio.h>		// ft_printf (REMOVE)
 #include <string.h>		// strcpy (REMOVE)
+
+#include "libft/libft.h"
 
 #include "malloc.h"
 
-void *pointer_add(void *ptr, size_t s);
-
 void	*zone_new(size_t size, size_t pagesize)
 {
-	printf("Making a new zone for size %lu\n", size);
+	ft_printf("Making a new zone for size %lu\n", size);
 	size_t			extra;
 	void			*zone;
 	t_block_header	*zone_header;
@@ -30,27 +30,27 @@ void	*zone_new(size_t size, size_t pagesize)
 	if (size == 0)
 		return (NULL);
 	size += sizeof(t_block_header);
-	printf("Size after adding header: %lu\n", size);
+	ft_printf("Size after adding header: %lu\n", size);
 	extra = size % pagesize;
 	if (extra)
 		size += pagesize - extra;
-	printf("Size after aligning to pagesize (%lu): %lu\n", pagesize, size);
+	ft_printf("Size after aligning to pagesize (%lu): %lu\n", pagesize, size);
 	zone = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
 	if (zone == MAP_FAILED)
 		return (NULL);
-	printf("mmap completed successfully.\n");
+	ft_printf("mmap completed successfully.\n");
 	zone_header = (t_block_header *)zone;
 	zone_header->type = BLOCK_TYPE_HEAD;
 	zone_header->size = size;
-	block_header = pointer_add(zone_header, sizeof(t_block_header));
+	block_header = ft_pointer_add(zone_header, sizeof(t_block_header));
 	block_header->type = BLOCK_TYPE_CRUFT;
 	block_header->size = size - sizeof(t_block_header);
 	block_header->next = NULL;
 	block_header->prev = NULL;
 	zone_header->next = NULL;
 	zone_header->prev = NULL;
-	printf("zone size = %lu\n", zone_header->size);
-	printf("block size = %lu\n", block_header->size);
+	ft_printf("zone size = %lu\n", zone_header->size);
+	ft_printf("block size = %lu\n", block_header->size);
 	return (zone);
 }
 
@@ -66,7 +66,7 @@ void	zone_free(void *zone)
 		((t_block_header *)zone_header->next)->prev = zone_header->prev;
 	status = munmap(zone, zone_header->size);
 	if (status != 0)
-		printf("It didn't work!\n");
+		ft_printf("It didn't work!\n");
 }
 
 t_free_block_header	*add_new_zone(t_free_block_header *arena_head, size_t min_size)
@@ -87,7 +87,7 @@ t_free_block_header	*add_new_zone(t_free_block_header *arena_head, size_t min_si
 	zone_head = zone_head->next;
 	if (zone_head == NULL)
 		return (NULL);
-	free_block = pointer_add(zone_head, sizeof(t_block_header));
+	free_block = ft_pointer_add(zone_head, sizeof(t_block_header));
 	free_block->b.type = BLOCK_TYPE_FREE;
 	return (free_block);
 }

@@ -6,9 +6,12 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:05:11 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/26 15:51:06 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/30 16:09:26 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#ifndef MALLOC_H
+# define MALLOC_H
 
 #include <unistd.h> // size_t
 #include <stdio.h> // printf (REMOVE)
@@ -19,8 +22,9 @@
 # define BLOCK_TYPE_USED 44
 # define BLOCK_TYPE_CRUFT 45
 
-// n = 255
-// m = 4095 or 262143
+// TODO play around with these values
+# define MALLOC_SIZE_SMALL 256
+# define MALLOC_SIZE_LARGE 4096
 
 typedef struct	s_block_header
 {
@@ -36,3 +40,9 @@ typedef struct					s_free_block_header
 	struct s_free_block_header	*next_free;
 	struct s_free_block_header	*prev_free;
 }								t_free_block_header;
+
+extern t_free_block_header	g_tiny;
+extern t_free_block_header	g_small;
+extern t_free_block_header	g_large;
+
+#endif
