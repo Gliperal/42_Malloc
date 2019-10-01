@@ -6,14 +6,12 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:28 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/10/01 14:09:49 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 15:19:10 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <sys/mman.h>	// mmap, munmap
 #include <unistd.h>		// getpagesize
-#include <stdio.h>		// ft_printf (REMOVE)
-#include <string.h>		// strcpy (REMOVE)
 
 #include "libft/libft.h"
 
@@ -21,12 +19,12 @@
 
 void	*zone_new(size_t size, size_t pagesize)
 {
-	ft_printf("Making a new zone for size %lu\n", size);
 	size_t			extra;
 	void			*zone;
 	t_block_header	*zone_header;
 	t_block_header	*block_header;
 
+	ft_printf("Making a new zone for size %lu\n", size);
 	if (size == 0)
 		return (NULL);
 	size += sizeof(t_block_header);
@@ -69,7 +67,8 @@ void	zone_free(void *zone)
 		ft_printf("It didn't work!\n");
 }
 
-t_free_block_header	*add_new_zone(t_free_block_header *arena_head, size_t min_size)
+t_free_block_header	*add_new_zone(t_free_block_header *arena_head,
+																size_t min_size)
 {
 	t_block_header		*zone_head;
 	size_t				zone_size;

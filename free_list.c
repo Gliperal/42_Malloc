@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/26 14:17:27 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/10/01 14:45:01 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 15:37:33 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,13 +85,11 @@ void				insert_free_block_s(t_free_block_header *free_block)
 }
 
 /*
-** Combine two consecutive freed blocks into a single larger free block. Does
-** not update the linked list of free blocks.
+** Combine two consecutive blocks into a single larger block. Does not update
+** the linked list of free blocks. Does not have to be free blocks.
 */
 
-// TODO rename to merge_consecutive_block and move out of free_list.c
-
-void				merge_consecutive_free_blocks(t_free_block_header *left)
+void				merge_consecutive_blocks(t_free_block_header *left)
 {
 	t_free_block_header *right;
 

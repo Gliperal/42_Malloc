@@ -1,23 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   free_list.h                                        :+:      :+:    :+:   */
+/*   zone.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/09/30 15:37:26 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/10/01 15:37:46 by nwhitlow         ###   ########.fr       */
+/*   Created: 2019/10/01 15:25:24 by nwhitlow          #+#    #+#             */
+/*   Updated: 2019/10/01 15:25:52 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef FREE_LIST_H
-# define FREE_LIST_H
+#ifndef ZONE_H
+# define ZONE_H
 
-void				remove_free_block(t_free_block_header *block);
-t_free_block_header	*extract_free_block(t_free_block_header *head, size_t size);
-void				insert_free_block(t_free_block_header *list,
-													t_free_block_header *block);
-void				insert_free_block_s(t_free_block_header *free_block);
-void				merge_consecutive_blocks(t_free_block_header *left);
+void				zone_free(void *zone);
+t_free_block_header	*add_new_zone(t_free_block_header *arena_head,
+															size_t min_size);
 
 #endif

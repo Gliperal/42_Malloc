@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:35 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/10/01 15:07:30 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 15:47:21 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,7 @@
 
 #include "malloc.h"
 #include "free_list.h"
-
-void	zone_free(void *zone);
-t_free_block_header	*add_new_zone(t_free_block_header *arena_head, size_t min_size);
+#include "zone.h"
 
 void	my_free(void *ptr)
 {
@@ -32,14 +30,14 @@ void	my_free(void *ptr)
 	{
 		ft_printf("Found free right neighbor. Merging.\n");
 		remove_free_block(neighbor);
-		merge_consecutive_free_blocks((t_free_block_header *)block);
+		merge_consecutive_blocks((t_free_block_header *)block);
 	}
 	neighbor = block->prev;
 	if (neighbor && neighbor->b.type == BLOCK_TYPE_FREE)
 	{
 		ft_printf("Found free left neighbor. Merging.\n");
 		remove_free_block(neighbor);
-		merge_consecutive_free_blocks(neighbor);
+		merge_consecutive_blocks(neighbor);
 		block = (t_block_header *)neighbor;
 	}
 	if (block->prev == NULL && block->next == NULL)
@@ -54,7 +52,8 @@ void	my_free(void *ptr)
 	}
 }
 
-void	allocate_from_block(t_block_header *block, size_t block_size, t_free_block_header *arena_head)
+void	allocate_from_block(t_block_header *block, size_t block_size,
+												t_free_block_header *arena_head)
 {
 	t_free_block_header	*free_block;
 
@@ -77,12 +76,14 @@ void	allocate_from_block(t_block_header *block, size_t block_size, t_free_block_
 	block->type = BLOCK_TYPE_USED;
 }
 
-void	*todd(size_t size, t_free_block_header *arena_head)
+void	*my_malloc(size_t size)
 {
-	size_t			block_size;
-	t_block_header	*block;
+	t_free_block_header	*arena_head;
+	size_t				block_size;
+	t_block_header		*block;
 
 	ft_printf("Mallocing a block of size %lu\n", size);
+	arena_head = get_arena_by_size(size);
 	block_size = sizeof(t_block_header) + size;
 	if (block_size < sizeof(t_free_block_header))
 		block_size = sizeof(t_free_block_header);
@@ -99,52 +100,51 @@ void	*todd(size_t size, t_free_block_header *arena_head)
 	return (block + 1);
 }
 
-void	*my_malloc(size_t size)
+/*
+** The use of MAP_FIXED in mmap is discouraged, so I'm choosing not to attempt
+** to expand mmap mappings.
+*/
+
+int	resize_block(t_block_header *block, size_t new_block_size)
 {
-	if (size < MALLOC_SIZE_SMALL)
-		return (todd(size, &g_tiny));
-	else if (size < MALLOC_SIZE_LARGE)
-		return (todd(size, &g_small));
-	else
-		return (todd(size, &g_large));
-	return (NULL);
+	t_free_block_header *neighbor;
+
+	if (block->size >= new_block_size)
+	{
+		ft_printf("Block is already big enough. Returning.\n");
+		return (1);
+	}
+	neighbor = block->next;
+	if (neighbor != NULL
+			&& neighbor->b.type == BLOCK_TYPE_FREE
+			&& block->size + neighbor->b.size >= new_block_size)
+	{
+		ft_printf("Free space to the right. Expanding into that.\n");
+		remove_free_block(neighbor);
+		merge_consecutive_blocks((t_free_block_header *)block);
+		allocate_from_block(block, new_block_size, NULL);
+		return (1);
+	}
+	return (0);
 }
 
-// The use of MAP_FIXED in mmap is discouraged, so I'm choosing not to attempt to expand mmap mappings.
 void	*my_realloc(void *ptr, size_t size)
 {
 	t_block_header	*block;
+	size_t			new_block_size;
+	void			*new;
 
 	ft_printf("Reallocing a block to size %lu\n", size);
 	if (ptr == NULL)
 		return (my_malloc(size));
 	block = ft_pointer_sub(ptr, sizeof(t_block_header));
-	size_t new_block_size = size + sizeof(t_block_header);
+	new_block_size = size + sizeof(t_block_header);
 	if (new_block_size < sizeof(t_free_block_header))
 		new_block_size = sizeof(t_free_block_header);
-	// If block is already size size, return
-	if (block->size >= size + sizeof(t_block_header))
-	{
-		ft_printf("Block is already big enough. Returning.\n");
+	if (resize_block(block, new_block_size))
 		return (ptr);
-	}
-	t_free_block_header *neighbor = block->next;
-	// If sufficient free size to the right, expand block and return
-	if (
-			(neighbor != NULL)
-			&& (neighbor->b.type == BLOCK_TYPE_FREE)
-			&& (block->size + neighbor->b.size >= new_block_size)
-	)
-	{
-		ft_printf("Free space to the right. Expanding into that.\n");
-		remove_free_block(neighbor);
-		merge_consecutive_free_blocks((t_free_block_header *)block);
-		allocate_from_block(block, new_block_size, NULL);
-		return (ptr);
-	}
-	// If all else fails:
 	ft_printf("Can't realloc. Copying to a new allocation instead.\n");
-	void *new = my_malloc(size);
+	new = my_malloc(size);
 	if (new == NULL)
 		return (NULL);
 	ft_memcpy(new, ptr, block->size - sizeof(t_block_header));
