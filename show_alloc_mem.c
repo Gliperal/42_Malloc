@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/26 18:35:04 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/30 16:15:44 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/30 16:27:31 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 #include "malloc.h"
 
-size_t	show_alloc_zone(const char *name, t_block_header *head)
+size_t	show_alloc_zone(const char *name, t_block_header *head, int verbose)
 {
 	t_block_header	*block;
 	void			*block_start;
@@ -34,10 +34,10 @@ size_t	show_alloc_zone(const char *name, t_block_header *head)
 			block_size = block->size - sizeof(t_block_header);
 			if (block->type == BLOCK_TYPE_USED)
 			{
-				ft_printf("(USED) %p - %p : %lu bytes\n", block_start, block_end, block_size);
+				ft_printf("%s%p - %p : %lu bytes\n", verbose ? "(USED) " : "", block_start, block_end, block_size);
 				total_size += block_size;
 			}
-			else if (block->type == BLOCK_TYPE_FREE)
+			else if (verbose && block->type == BLOCK_TYPE_FREE)
 				ft_printf("(FREE) %p : %lu bytes\n", block_start, block->size);
 			block = block->next;
 		}
@@ -58,4 +58,35 @@ size_t	show_free_list(t_free_block_header *node)
 		node = node->next_free;
 	}
 	return (total_size);
+}
+
+void	show_alloc_mem(void)
+{
+	size_t total;
+
+	total = 0;
+	total += show_alloc_zone("TINY", g_tiny.b.next, 0);
+	total += show_alloc_zone("SMALL", g_small.b.next, 0);
+	total += show_alloc_zone("LARGE", g_large.b.next, 0);
+	ft_printf("Total : %lu bytes\n", total);
+}
+
+void	show_alloc_mem_ex(void)
+{
+	size_t total;
+
+	ft_printf("\n\n");
+	ft_printf("show_alloc_mem\n");
+	total = 0;
+	total += show_alloc_zone("TINY", g_tiny.b.next, 1);
+	total += show_alloc_zone("SMALL", g_small.b.next, 1);
+	total += show_alloc_zone("LARGE", g_large.b.next, 1);
+	ft_printf("Total : %lu bytes\n", total);
+	ft_printf("------------------------------\nFREE :\n");
+	total = 0;
+	total += show_free_list(g_tiny.next_free);
+	total += show_free_list(g_small.next_free);
+	total += show_free_list(g_large.next_free);
+	ft_printf("Total : %lu bytes\n", total);
+	ft_printf("\n\n");
 }

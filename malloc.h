@@ -6,15 +6,14 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:05:11 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/30 16:09:26 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/09/30 16:20:36 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MALLOC_H
 # define MALLOC_H
 
-#include <unistd.h> // size_t
-#include <stdio.h> // printf (REMOVE)
+# include <unistd.h> // size_t
 
 # define NULLPTR 0
 # define BLOCK_TYPE_HEAD 42

@@ -6,9 +6,11 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/26 14:17:27 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/30 15:36:40 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 14:45:01 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#include "libft/libft.h"
 
 #include "malloc.h"
 
@@ -16,7 +18,7 @@
 ** Remove a free block from the linked list of free blocks.
 */
 
-void	remove_free_block(t_free_block_header *block)
+void				remove_free_block(t_free_block_header *block)
 {
 	block->prev_free->next_free = block->next_free;
 	if (block->next_free)
@@ -40,7 +42,7 @@ t_free_block_header	*extract_free_block(t_free_block_header *head, size_t size)
 		if (block->b.size >= size)
 		{
 			remove_free_block(block);
-			return block;
+			return (block);
 		}
 		block = block->next_free;
 	}
@@ -49,11 +51,13 @@ t_free_block_header	*extract_free_block(t_free_block_header *head, size_t size)
 
 /*
 ** Insert a free block into the linked list of free blocks. insert_free_block
-** demands the head of the linked list. insert_free_block_s will find it
-** manually based on the size of neighboring allocated blocks.
+** demands the head of the linked list. insert_free_block_s used to find it
+** manually based on the size of neighboring allocated blocks, but that fails
+** if realloc changes a block size, so now it backtracks to find the arena head.
 */
 
-void	insert_free_block(t_free_block_header *list, t_free_block_header *block)
+void				insert_free_block(t_free_block_header *list,
+													t_free_block_header *block)
 {
 	while (list->next_free && (list->next_free->b.size < block->b.size))
 		list = list->next_free;
@@ -64,20 +68,20 @@ void	insert_free_block(t_free_block_header *list, t_free_block_header *block)
 	list->next_free = block;
 }
 
-void	insert_free_block_s(t_free_block_header *free_block)
+void				insert_free_block_s(t_free_block_header *free_block)
 {
-	t_block_header *block;
+	t_block_header		*block;
+	t_block_header		*zone;
+	t_free_block_header	*arena_head;
 
-	if (free_block->b.next)
-		block = free_block->b.next;
-	else
-		block = free_block->b.prev;
-	if (block->size < MALLOC_SIZE_SMALL)
-		insert_free_block(&g_tiny, free_block);
-	else if (block->size < MALLOC_SIZE_LARGE)
-		insert_free_block(&g_small, free_block);
-	else
-		insert_free_block(&g_large, free_block);
+	block = (t_block_header *)free_block;
+	while (block->prev)
+		block = block->prev;
+	zone = ft_pointer_sub(block, sizeof(t_block_header));
+	while (zone->prev)
+		zone = zone->prev;
+	arena_head = (t_free_block_header *)zone;
+	insert_free_block(arena_head, free_block);
 }
 
 /*
@@ -85,7 +89,9 @@ void	insert_free_block_s(t_free_block_header *free_block)
 ** not update the linked list of free blocks.
 */
 
-void	merge_consecutive_free_blocks(t_free_block_header *left)
+// TODO rename to merge_consecutive_block and move out of free_list.c
+
+void				merge_consecutive_free_blocks(t_free_block_header *left)
 {
 	t_free_block_header *right;
 

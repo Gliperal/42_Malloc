@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:28 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/30 16:16:07 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 14:09:49 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,10 +83,10 @@ t_free_block_header	*add_new_zone(t_free_block_header *arena_head, size_t min_si
 	else
 		zone_size = min_size;
 	zone_head->next = zone_new(zone_size, getpagesize());
+	if (zone_head->next == NULL)
+		return (NULL);
 	((t_block_header *)zone_head->next)->prev = zone_head;
 	zone_head = zone_head->next;
-	if (zone_head == NULL)
-		return (NULL);
 	free_block = ft_pointer_add(zone_head, sizeof(t_block_header));
 	free_block->b.type = BLOCK_TYPE_FREE;
 	return (free_block);

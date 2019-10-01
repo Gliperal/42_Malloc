@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:35 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/09/30 16:15:29 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 15:07:30 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,11 +54,33 @@ void	my_free(void *ptr)
 	}
 }
 
+void	allocate_from_block(t_block_header *block, size_t block_size, t_free_block_header *arena_head)
+{
+	t_free_block_header	*free_block;
+
+	if (block->size >= block_size + sizeof(t_free_block_header))
+	{
+		ft_printf("Block is big enough to split.\n");
+		free_block = ft_pointer_add(block, block_size);
+		free_block->b.type = BLOCK_TYPE_FREE;
+		free_block->b.size = block->size - block_size;
+		free_block->b.next = block->next;
+		free_block->b.prev = block;
+		if (arena_head == NULL)
+			insert_free_block_s(free_block);
+		else
+			insert_free_block(arena_head, free_block);
+		block->size = block_size;
+		block->next = free_block;
+		ft_printf("Split into blocks of size %lu and %lu\n", block->size, free_block->b.size);
+	}
+	block->type = BLOCK_TYPE_USED;
+}
+
 void	*todd(size_t size, t_free_block_header *arena_head)
 {
-	size_t				block_size;
-	t_block_header		*block;
-	t_free_block_header	*free_block;
+	size_t			block_size;
+	t_block_header	*block;
 
 	ft_printf("Mallocing a block of size %lu\n", size);
 	block_size = sizeof(t_block_header) + size;
@@ -73,20 +95,7 @@ void	*todd(size_t size, t_free_block_header *arena_head)
 			return (NULL);
 	}
 	ft_printf("Found a free block of size %lu. Using that.\n", block->size);
-	if (block->size >= block_size + sizeof(t_free_block_header))
-	{
-		ft_printf("Block is big enough to split.\n");
-		free_block = ft_pointer_add(block, block_size);
-		free_block->b.type = BLOCK_TYPE_FREE;
-		free_block->b.size = block->size - block_size;
-		free_block->b.next = block->next;
-		free_block->b.prev = block;
-		insert_free_block(arena_head, free_block);
-		block->size = block_size;
-		block->next = free_block;
-		ft_printf("Split into blocks of size %lu and %lu\n", block->size, free_block->b.size);
-	}
-	block->type = BLOCK_TYPE_USED;
+	allocate_from_block(block, block_size, arena_head);
 	return (block + 1);
 }
 
@@ -101,46 +110,44 @@ void	*my_malloc(size_t size)
 	return (NULL);
 }
 
+// The use of MAP_FIXED in mmap is discouraged, so I'm choosing not to attempt to expand mmap mappings.
 void	*my_realloc(void *ptr, size_t size)
 {
 	t_block_header	*block;
 
+	ft_printf("Reallocing a block to size %lu\n", size);
 	if (ptr == NULL)
-		return my_malloc(size);
+		return (my_malloc(size));
 	block = ft_pointer_sub(ptr, sizeof(t_block_header));
+	size_t new_block_size = size + sizeof(t_block_header);
+	if (new_block_size < sizeof(t_free_block_header))
+		new_block_size = sizeof(t_free_block_header);
 	// If block is already size size, return
 	if (block->size >= size + sizeof(t_block_header))
+	{
+		ft_printf("Block is already big enough. Returning.\n");
 		return (ptr);
+	}
+	t_free_block_header *neighbor = block->next;
 	// If sufficient free size to the right, expand block and return
-	// If nothing to the right, attempt to expand zone with mmap
+	if (
+			(neighbor != NULL)
+			&& (neighbor->b.type == BLOCK_TYPE_FREE)
+			&& (block->size + neighbor->b.size >= new_block_size)
+	)
+	{
+		ft_printf("Free space to the right. Expanding into that.\n");
+		remove_free_block(neighbor);
+		merge_consecutive_free_blocks((t_free_block_header *)block);
+		allocate_from_block(block, new_block_size, NULL);
+		return (ptr);
+	}
 	// If all else fails:
+	ft_printf("Can't realloc. Copying to a new allocation instead.\n");
 	void *new = my_malloc(size);
 	if (new == NULL)
 		return (NULL);
 	ft_memcpy(new, ptr, block->size - sizeof(t_block_header));
 	my_free(ptr);
 	return (new);
-}
-
-size_t	show_alloc_zone(const char *name, t_block_header *head);
-size_t	show_free_list(t_free_block_header *node);
-
-void	show_alloc_mem(void)
-{
-	size_t total;
-
-	ft_printf("\n\n");
-	ft_printf("show_alloc_mem\n");
-	total = 0;
-	total += show_alloc_zone("TINY", g_tiny.b.next);
-	total += show_alloc_zone("SMALL", g_small.b.next);
-	total += show_alloc_zone("LARGE", g_large.b.next);
-	ft_printf("Total : %lu bytes\n", total);
-	ft_printf("------------------------------\nFREE :\n");
-	total = 0;
-	total += show_free_list(g_tiny.next_free);
-	total += show_free_list(g_small.next_free);
-	total += show_free_list(g_large.next_free);
-	ft_printf("Total : %lu bytes\n", total);
-	ft_printf("\n\n");
 }
