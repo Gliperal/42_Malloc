@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/26 18:35:04 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/10/01 15:57:30 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 16:20:48 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,18 +83,18 @@ void	show_alloc_mem_ex(void)
 {
 	size_t total;
 
-	ft_printf("\n\n");
-	ft_printf("show_alloc_mem\n");
+	ft_putstr("\n\n");
+	ft_putstr("show_alloc_mem\n");
 	total = 0;
 	total += show_alloc_zone("TINY", g_arenas[0].b.next, 1);
 	total += show_alloc_zone("SMALL", g_arenas[1].b.next, 1);
 	total += show_alloc_zone("LARGE", g_arenas[2].b.next, 1);
 	ft_printf("Total : %lu bytes\n", total);
-	ft_printf("------------------------------\nFREE :\n");
+	ft_putstr("------------------------------\nFREE :\n");
 	total = 0;
 	total += show_free_list(g_arenas[0].next_free);
 	total += show_free_list(g_arenas[1].next_free);
 	total += show_free_list(g_arenas[2].next_free);
 	ft_printf("Total : %lu bytes\n", total);
-	ft_printf("\n\n");
+	ft_putstr("\n\n");
 }

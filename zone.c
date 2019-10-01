@@ -6,37 +6,33 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:28 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/10/01 15:19:10 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 16:29:45 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <sys/mman.h>	// mmap, munmap
-#include <unistd.h>		// getpagesize
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include "libft/libft.h"
 
 #include "malloc.h"
 
-void	*zone_new(size_t size, size_t pagesize)
+void				*zone_new(size_t size, size_t pagesize)
 {
 	size_t			extra;
 	void			*zone;
 	t_block_header	*zone_header;
 	t_block_header	*block_header;
 
-	ft_printf("Making a new zone for size %lu\n", size);
 	if (size == 0)
 		return (NULL);
 	size += sizeof(t_block_header);
-	ft_printf("Size after adding header: %lu\n", size);
 	extra = size % pagesize;
 	if (extra)
 		size += pagesize - extra;
-	ft_printf("Size after aligning to pagesize (%lu): %lu\n", pagesize, size);
 	zone = mmap(0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
 	if (zone == MAP_FAILED)
 		return (NULL);
-	ft_printf("mmap completed successfully.\n");
 	zone_header = (t_block_header *)zone;
 	zone_header->type = BLOCK_TYPE_HEAD;
 	zone_header->size = size;
@@ -47,13 +43,10 @@ void	*zone_new(size_t size, size_t pagesize)
 	block_header->prev = NULL;
 	zone_header->next = NULL;
 	zone_header->prev = NULL;
-	ft_printf("zone size = %lu\n", zone_header->size);
-	ft_printf("block size = %lu\n", block_header->size);
 	return (zone);
 }
 
-// todo catch double free / bad free exceptions?
-void	zone_free(void *zone)
+void				zone_free(void *zone)
 {
 	t_block_header	*zone_header;
 	int				status;
@@ -64,7 +57,7 @@ void	zone_free(void *zone)
 		((t_block_header *)zone_header->next)->prev = zone_header->prev;
 	status = munmap(zone, zone_header->size);
 	if (status != 0)
-		ft_printf("It didn't work!\n");
+		return ;
 }
 
 t_free_block_header	*add_new_zone(t_free_block_header *arena_head,
