@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:35 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/10/01 16:29:59 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/01 21:58:01 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,41 @@
 #include "free_list.h"
 #include "zone.h"
 
+int	is_allocated(void *ptr)
+{
+	t_block_header *zone_head;
+	t_block_header *ptr_block;
+	t_block_header		*block;
+	int i;
+
+	ptr_block = ft_pointer_sub(ptr, sizeof(t_block_header));
+	i = 0;
+	while (i < 3)
+	{
+		zone_head = g_arenas[i].b.next;
+		while (zone_head)
+		{
+			if (ptr_block > zone_head && (void *)ptr_block < ft_pointer_add(zone_head, zone_head->size))
+			{
+				block = ft_pointer_add(zone_head, sizeof(t_block_header));
+				while (block != NULL && block < ptr_block)
+					block = block->next;
+				return (block != NULL && block->type == BLOCK_TYPE_USED && block == ptr_block);
+			}
+			zone_head = zone_head->next;
+		}
+		i++;
+	}
+	return (0);
+}
+
 void	free(void *ptr)
 {
 	t_block_header		*block;
 	t_free_block_header	*neighbor;
 
+	if (!is_allocated(ptr))
+		return ;
 	block = ft_pointer_sub(ptr, sizeof(t_block_header));
 	block->type = BLOCK_TYPE_FREE;
 	neighbor = block->next;
