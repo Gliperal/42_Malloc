@@ -6,7 +6,7 @@
 /*   By: nwhitlow <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/25 15:04:35 by nwhitlow          #+#    #+#             */
-/*   Updated: 2019/10/01 22:16:12 by nwhitlow         ###   ########.fr       */
+/*   Updated: 2019/10/06 20:25:28 by nwhitlow         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,8 @@ void	*realloc(void *ptr, size_t size)
 
 	if (ptr == NULL)
 		return (malloc(size));
+	if (!is_allocated(ptr))
+		return (NULL);
 	block = ft_pointer_sub(ptr, sizeof(t_block_header));
 	new_block_size = size + sizeof(t_block_header);
 	if (new_block_size < sizeof(t_free_block_header))
